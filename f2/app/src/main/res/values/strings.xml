@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Digital Guide</string>
+
+    <string name="capture">CAPTURE</string>
+    <string name="todo">TODO</string>
+    <string name="flashDes">flash</string>
+    <string name="place_holder">place holder</string>
+</resources>

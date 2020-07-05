@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="300dp"
+    android:background="@drawable/iosdialog_bg"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/imgView"
+        android:layout_width="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginBottom="5dp"
+        android:contentDescription="@string/app_name"
+        android:layout_height="170dp"
+        android:scaleType="centerCrop"/>
+    <TextView
+        android:id="@+id/Imgmessage"
+        android:layout_width="wrap_content"
+        android:text="@string/app_name"
+        android:layout_gravity="center"
+        android:textColor="#FF037BFF"
+        android:textSize="18sp"
+        android:layout_margin="5dp"
+        android:layout_height="wrap_content" />
+    <View
+        android:id="@+id/horizontal_line"
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:layout_marginTop="10dp"
+        android:background="#ffc6c6c6" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_gravity="center"
+        android:text="Close"
+        android:background="@drawable/iosdialog_sigle_btn_selector"
+        android:textColor="#FF037BFF"
+        android:textSize="16sp"
+        android:id="@+id/close"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
