@@ -79,7 +79,7 @@ public class Model {
     //predict landmark
     public  String predict(String f){
         Bitmap bitmap = getResizedBitmap(BitmapFactory.decodeFile(f), X_diamension, Y_diamension);
-        convertBitmapToByteBuffer(bitmap);
+        converter(bitmap);
         interpreter.run(imgBuffer, labelProbArray);
         Top_Labels();
         bitmap.recycle();
@@ -113,7 +113,7 @@ public class Model {
     }
 
     // converts bitmap to byte array
-    private void convertBitmapToByteBuffer(Bitmap bitmap) {
+    private void converter(Bitmap bitmap) {
         if (imgBuffer == null) { return; }
         imgBuffer.rewind();
         bitmap.getPixels(Values, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());

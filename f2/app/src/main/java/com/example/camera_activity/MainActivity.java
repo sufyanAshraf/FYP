@@ -20,6 +20,12 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -30,11 +36,16 @@ import android.content.pm.PackageManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Size;
+import android.view.OrientationEventListener;
 import android.view.Surface;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +54,7 @@ import java.util.concurrent.Executors;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.ligl.android.widget.iosdialog.IOSDialog;
 
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
 import static java.lang.Boolean.parseBoolean;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,23 +83,54 @@ public class MainActivity extends AppCompatActivity {
     CameraControl cameraControl;
     CameraInfo cameraInfo;
     PreviewView viewFinder;
-
+    boolean isportrate =false;
     static boolean isTorchOn = false;
     SharedPreferences sharePreferences;
-
+    Model model;
+    int newOrientation;
+    OrientationEventListener mOrientationListener;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//        ActionBar actionBar = getSupportActionBar();
+//        assert actionBar != null;
+//        actionBar.hide();
 
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
         ActionBar actionBar = getSupportActionBar();
-        assert actionBar != null;
         actionBar.hide();
+
+        mOrientationListener = new OrientationEventListener(this,
+                SensorManager.SENSOR_DELAY_NORMAL) {
+
+            @Override
+            public void onOrientationChanged(int orientation) {
+//                Toast.makeText(MainActivity.this, "orientation"+orientation, Toast.LENGTH_SHORT).show();
+
+                newOrientation = orientation;
+            }
+        };
+
+        if (mOrientationListener.canDetectOrientation() == true) {
+//            Toast.makeText(MainActivity.this, "detect", Toast.LENGTH_LONG).show();
+            mOrientationListener.enable();
+        }
+        else {
+//            Toast.makeText(MainActivity.this, "Cannot detect orientation", Toast.LENGTH_LONG).show();
+            mOrientationListener.disable();
+        }
+
+
         Database.getInstance(this).initialize_server();
 
         if (allPermissionsGranted()) {
             startCamera();
             turnGPD();
+            model = new Model(model_name, MainActivity.this);
         } else {
             ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
@@ -118,9 +161,10 @@ public class MainActivity extends AppCompatActivity {
                 ProcessCameraProvider cameraProvider = (ProcessCameraProvider) cameraProviderFuture.get();
                 preview = new Preview.Builder().build();
 
-                imageCapture = new ImageCapture.Builder().setTargetResolution(new Size(500, 400))
-                        .setTargetRotation(Surface.ROTATION_0)
-                        .build();
+                imageCapture = new ImageCapture.Builder().setTargetResolution(new Size(500, 500))
+                            .setTargetRotation(Surface.ROTATION_0)
+                            .build();
+
 //                imageCapture = (new ImageCapture.Builder()).build();
                 CameraSelector cameraSelector = new CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build();
 
@@ -169,9 +213,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void takePhoto() {
 
         if (imageCapture != null) {
+
+            if (newOrientation <= 45) { isportrate = true; }
+            else if (newOrientation <= 315) {}
+            else { isportrate = true; }
+
             progressDialogBox();
             pd.setCanceledOnTouchOutside(false);
             file_path = getOutputDirectory()+"/a.jpg";
@@ -180,15 +230,48 @@ public class MainActivity extends AppCompatActivity {
             ImageCapture.OutputFileOptions outputOptions = (new ImageCapture.OutputFileOptions.Builder(file)).build();
             imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this), new ImageCapture.OnImageSavedCallback(){
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                    Thread work = new Thread(new LoadModel());
-                    work.start();
-                    try {
-                        work.join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+//                    Thread work = new Thread(new LoadModel());
+//                    work.start();
+//                    try {
+//                        work.join();
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+
+                    if(isportrate) {
+                        isportrate =false;
+                        Bitmap bitmap = BitmapFactory.decodeFile(file_path);
+
+                        Matrix matrix = new Matrix();
+                        matrix.postRotate(90);
+
+                        Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(),
+                                matrix, true);
+
+                        try {
+                            FileOutputStream fos = new FileOutputStream(file);
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+                            fos.close();
+                        } catch (FileNotFoundException e) {
+                            Log.d("main", "File not found: " + e.getMessage());
+                        } catch (IOException e) {
+                            Log.d("main", "Error accessing file: " + e.getMessage());
+                        }
                     }
+
+                    ID = model.predict(file_path);
+
+                    if (Integer.parseInt(ID)  != 0) {
+                        retrive();
+                    }
+
                     Toast.makeText(MainActivity.this, "ok"+ID, Toast.LENGTH_LONG).show();
                     pd.dismiss();
+                    View decorView = getWindow().getDecorView();
+                    int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
+                    decorView.setSystemUiVisibility(uiOptions);
+                    ActionBar actionBar = getSupportActionBar();
+                    actionBar.hide();
                 }
                 public void onError(@NonNull ImageCaptureException exc) {
                     Log.e("Main", "Photo capture failed: " + exc.getMessage(), exc);
@@ -292,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharePreferences.edit();
         editor.putString("isFlashOn", Boolean.toString(isTorchOn));
         editor.apply();
+        mOrientationListener.disable();
     }
 
     private void progressDialogBox(){
@@ -389,22 +473,20 @@ public class MainActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-
-    class LoadModel implements Runnable{
-
-        @Override
-        public void run() {
-            Model model = new Model(model_name, MainActivity.this);
-            ID = model.predict(file_path);
-
-            ID ="1";
-            if (Integer.parseInt(ID)  != 0) {
-                retrive();
-            }
-
-            file.delete();
-            file = null;
-        }
-    }
+//
+//    class LoadModel implements Runnable{
+//
+//        @Override
+//        public void run() {
+//
+////            ID ="1";
+////            if (Integer.parseInt(ID)  != 0) {
+////                retrive();
+////            }
+////
+////            file.delete();
+////            file = null;
+//        }
+//    }
 
 }
