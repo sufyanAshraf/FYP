@@ -25,10 +25,6 @@ import java.util.PriorityQueue;
 
 public class Model {
 
-    private static final int RESULTS_TO_SHOW = 3;
-    private static final int IMAGE_MEAN = 128;
-    private static final float IMAGE_STD = 128.0f;
-
     private final Interpreter.Options interpreterOptions = new Interpreter.Options();
     private Interpreter interpreter;
     private List<String> labelList;
@@ -41,15 +37,18 @@ public class Model {
     String result;
     private int[] Values;
 
+    private static final int results = 3;
+    private static final int mean = 128;
+    private static final float IMAGE_STD = 128.0f;
+
     private ByteBuffer imgBuffer = null;
     private float[][] labelProbArray = null;
-//    private String[] topConfidence = null;
     private String[] topLables = null;
 
     // priority queue
     private PriorityQueue<Map.Entry<String, Float>> sortedLabels =
             new PriorityQueue<>(
-                    RESULTS_TO_SHOW,
+                    results,
                     new Comparator<Map.Entry<String, Float>>() {
                         @Override
                         public int compare(Map.Entry<String, Float> o1, Map.Entry<String, Float> o2) {
@@ -73,8 +72,7 @@ public class Model {
         imgBuffer = ByteBuffer.allocateDirect( 4 * X_diamension * Y_diamension * Size);
         imgBuffer.order(ByteOrder.nativeOrder());
         labelProbArray = new float[1][labelList.size()];
-        topLables = new String[RESULTS_TO_SHOW];
-//        topConfidence = new String[RESULTS_TO_SHOW];
+        topLables = new String[results];
     }
     //predict landmark
     public  String predict(String f){
@@ -100,7 +98,7 @@ public class Model {
     private void Top_Labels() {
         for (int i = 0; i < labelList.size(); ++i) {
             sortedLabels.add(new AbstractMap.SimpleEntry<>(labelList.get(i), labelProbArray[0][i]));
-            if (sortedLabels.size() > RESULTS_TO_SHOW) {
+            if (sortedLabels.size() > results) {
                 sortedLabels.poll();
             }
         }
@@ -121,9 +119,9 @@ public class Model {
         for (int i = 0; i < X_diamension; ++i) {
             for (int j = 0; j < Y_diamension; ++j) {
                 final int val = Values[pixel++];
-                imgBuffer.putFloat((((val >> 16) & 0xFF)-IMAGE_MEAN)/IMAGE_STD);
-                imgBuffer.putFloat((((val >> 8) & 0xFF)-IMAGE_MEAN)/IMAGE_STD);
-                imgBuffer.putFloat((((val) & 0xFF)-IMAGE_MEAN)/IMAGE_STD);
+                imgBuffer.putFloat((((val >> 16) & 0xFF)-mean)/IMAGE_STD);
+                imgBuffer.putFloat((((val >> 8) & 0xFF)-mean)/IMAGE_STD);
+                imgBuffer.putFloat((((val) & 0xFF)-mean)/IMAGE_STD);
             }
         }
     }

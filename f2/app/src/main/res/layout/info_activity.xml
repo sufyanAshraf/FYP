@@ -41,10 +41,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
-                android:background="@android:color/transparent"
+                android:background="@drawable/iosdialog_bg"
                 android:layout_below="@+id/mess"
                 android:textSize="18dp"
                 android:textColor="@color/blue"
+                android:layout_marginRight="10dp"
                 android:text="Try cuisine"
                 android:layout_marginTop="12dp"/>
 
@@ -53,10 +54,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
-                android:background="@android:color/transparent"
+                android:background="@drawable/iosdialog_bg"
                 android:layout_below="@+id/cusine"
                 android:textSize="18dp"
                 android:textColor="@color/blue"
+                android:layout_marginRight="10dp"
                 android:text="You may also like this place"
                 android:layout_marginTop="12dp"/>
 

@@ -13,9 +13,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
-public class Suggestion_dialogbox extends AppCompatDialogFragment {
+public class Suggestion_dialogbox extends AppCompatDialogFragment  {
 
     private Suggestion_dialogbox listener;
+    String suggestions;
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -36,8 +37,7 @@ public class Suggestion_dialogbox extends AppCompatDialogFragment {
                 .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-//                        String s = edit_suggestion.getText().toString();
-//                        listener.applyTexts(s);
+                        suggestions = edit_suggestion.getText().toString();
                     }
                 });
 
@@ -47,16 +47,10 @@ public class Suggestion_dialogbox extends AppCompatDialogFragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
-//        try {
-//             listener = (DialogListener) context;
-//        } catch (ClassCastException e) {
-//            throw new ClassCastException(context.toString() + "error");
-//        }
     }
 
     public interface DialogListener {
-//        void applyTexts(String suggestion);
+        void applyTexts(String suggestion);
     }
 }
 

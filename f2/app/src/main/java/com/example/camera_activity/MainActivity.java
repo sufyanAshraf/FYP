@@ -21,7 +21,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -50,11 +49,8 @@ import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
 import com.google.common.util.concurrent.ListenableFuture;
 import com.ligl.android.widget.iosdialog.IOSDialog;
-
-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
 import static java.lang.Boolean.parseBoolean;
 
 public class MainActivity extends AppCompatActivity {
@@ -75,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     String file_path;
     Boolean IsReplica = false;
     double long_min, long_max,  lat_min, lat_max;
-
+    String suggestion;
     Preview preview;
     ImageCapture imageCapture;
     Camera camera;
@@ -93,15 +89,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-//        ActionBar actionBar = getSupportActionBar();
-//        assert actionBar != null;
-//        actionBar.hide();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
         ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
         actionBar.hide();
 
         mOrientationListener = new OrientationEventListener(this,
@@ -110,12 +104,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onOrientationChanged(int orientation) {
 //                Toast.makeText(MainActivity.this, "orientation"+orientation, Toast.LENGTH_SHORT).show();
-
+                Log.d("orien", "orentation: " + orientation);
                 newOrientation = orientation;
             }
         };
 
-        if (mOrientationListener.canDetectOrientation() == true) {
+        if (mOrientationListener.canDetectOrientation()) {
 //            Toast.makeText(MainActivity.this, "detect", Toast.LENGTH_LONG).show();
             mOrientationListener.enable();
         }
@@ -124,12 +118,11 @@ public class MainActivity extends AppCompatActivity {
             mOrientationListener.disable();
         }
 
-
         Database.getInstance(this).initialize_server();
 
         if (allPermissionsGranted()) {
             startCamera();
-            turnGPD();
+            turnGPS();
             model = new Model(model_name, MainActivity.this);
         } else {
             ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
@@ -148,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
 
         viewFinder = findViewById(R.id.viewFinder);
 
-        findViewById(R.id.camera_capture_button).setOnClickListener(it -> { takePhoto(); });
+        findViewById(R.id.camera_capture_button).setOnClickListener(it -> takePhoto());
 
         torchBtn.setOnClickListener(it -> toggleTorch());
         cameraExecutor = Executors.newSingleThreadExecutor();
@@ -224,33 +217,27 @@ public class MainActivity extends AppCompatActivity {
 
             progressDialogBox();
             pd.setCanceledOnTouchOutside(false);
+            //file_path = getOutputDirectory()+"/"+UUID.randomUUID().toString()+".jpg";
             file_path = getOutputDirectory()+"/a.jpg";
             file = new File(file_path);
 
             ImageCapture.OutputFileOptions outputOptions = (new ImageCapture.OutputFileOptions.Builder(file)).build();
             imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this), new ImageCapture.OnImageSavedCallback(){
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-//                    Thread work = new Thread(new LoadModel());
-//                    work.start();
-//                    try {
-//                        work.join();
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
 
                     if(isportrate) {
                         isportrate =false;
                         Bitmap bitmap = BitmapFactory.decodeFile(file_path);
 
                         Matrix matrix = new Matrix();
-                        matrix.postRotate(90);
+                        matrix.postRotate(150);
 
                         Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(),
                                 matrix, true);
 
                         try {
                             FileOutputStream fos = new FileOutputStream(file);
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+                            rotated.compress(Bitmap.CompressFormat.JPEG, 100, fos);
                             fos.close();
                         } catch (FileNotFoundException e) {
                             Log.d("main", "File not found: " + e.getMessage());
@@ -260,17 +247,19 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     ID = model.predict(file_path);
-
+                    pd.dismiss();
                     if (Integer.parseInt(ID)  != 0) {
                         retrive();
                     }
+                    else {displayInfo();}
 
-                    Toast.makeText(MainActivity.this, "ok"+ID, Toast.LENGTH_LONG).show();
-                    pd.dismiss();
+                    //Toast.makeText(MainActivity.this, "ok"+ID, Toast.LENGTH_LONG).show();
+
                     View decorView = getWindow().getDecorView();
                     int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
                     decorView.setSystemUiVisibility(uiOptions);
                     ActionBar actionBar = getSupportActionBar();
+                    assert actionBar != null;
                     actionBar.hide();
                 }
                 public void onError(@NonNull ImageCaptureException exc) {
@@ -308,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "You can't use gps without permission", Toast.LENGTH_SHORT).show();
                 finish();
             }
-            turnGPD();
+            turnGPS();
             ActivityCompat.requestPermissions(MainActivity.this, new String[] {Manifest.permission.INTERNET, Manifest.permission.ACCESS_NETWORK_STATE}, 5);
         }
         if(requestCode == 5) {
@@ -320,12 +309,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 50) {
+            turnGPS();
+        }
+    }
     private boolean allPermissionsGranted(){
         return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
 
-    public void turnGPD(){
+    public void turnGPS(){
         final LocationManager manager = (LocationManager)this.getSystemService(Context.LOCATION_SERVICE );
 
         if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) )
@@ -336,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            startActivity(intent);
+                            startActivityForResult(intent, 50);
                         }
                     })
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -473,20 +469,10 @@ public class MainActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-//
-//    class LoadModel implements Runnable{
-//
-//        @Override
-//        public void run() {
-//
-////            ID ="1";
-////            if (Integer.parseInt(ID)  != 0) {
-////                retrive();
-////            }
-////
-////            file.delete();
-////            file = null;
-//        }
-//    }
+
+    public void applyTexts(String a) {
+       suggestion = a;
+
+    }
 
 }

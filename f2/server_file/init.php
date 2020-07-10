@@ -12,16 +12,18 @@
 
 	// table to store user data
 
-	$sql = 'CREATE TABLE IF NOT EXISTS `Landmark_infromation` (
+	$sql = 'CREATE TABLE IF NOT EXISTS `landmark_infromation` (
 			  `ID` int(11) NOT NULL AUTO_INCREMENT,
-			  `Name` varchar(100) NOT NULL,
-			  `Information` varchar(5000) NOT NULL,
-			  `Message` varchar(250) NOT NULL,
+			  `Name` varchar(100) NOT NULL, 
 			  `City` varchar(100) NOT NULL,
 			  `Long_min` double NOT NULL,
 			  `Long_max` double NOT NULL,
 			  `Lat_min` double NOT NULL,
 			  `Lat_max` double NOT NULL,
+			  `Assign_to` int(11) NOT NULL,
+		      `Category` varchar(100) NOT NULL,
+			  `Information` varchar(5000) NOT NULL,
+			  `Message` varchar(250) NOT NULL,
 			  PRIMARY KEY (`ID`)
 			);';
 	mysqli_query($conn, $sql);
@@ -30,7 +32,8 @@
 	$sq1 = 'CREATE TABLE IF NOT EXISTS `food` (
 			`Food_ID` int(11) NOT NULL AUTO_INCREMENT, 
 			`Name` varchar(100) NOT NULL, 
-			`City` varchar(100) NOT NULL, 
+			`City` varchar(100) NOT NULL,
+			`Food_img` mediumtext, 
 			PRIMARY KEY (`Food_ID`)
 			);';
 	

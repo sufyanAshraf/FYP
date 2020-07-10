@@ -30,8 +30,9 @@ public class Database {
 
     public Database(Activity _context) {
         context = _context;
-        queue = Volley.newRequestQueue(context); 
-        domain = "https://landmark0.000webhostapp.com"; //http://192.168.56.1/f2/server_file";
+        queue = Volley.newRequestQueue(context);
+        domain = "https://landmark0.000webhostapp.com";
+//        domain = "http://192.168.43.3/f3/server_file"; //"http://192.168.56.1/f2/server_file";
     }
 
     public void clearQueue()

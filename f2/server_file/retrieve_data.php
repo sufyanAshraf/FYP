@@ -78,7 +78,7 @@
 		$name_arr = array();
 		$msg_arr = array();
 		
-		$query = "SELECT `ID`, `Name`, `Message` FROM Landmark_infromation WHERE City = '$city' and `Assign_to` != (SELECT `Assign_to` FROM Landmark_infromation WHERE `ID` = '$id') and `Category` = (SELECT `Category` FROM Landmark_infromation WHERE `ID` = '$id')";
+		$query = "SELECT `ID`, `Name`, `Message` FROM Landmark_infromation WHERE City = '$city' and `Assign_to` != (SELECT `Assign_to` FROM Landmark_infromation WHERE `ID` = '$id') and `Category` = (SELECT `Category` FROM Landmark_infromation WHERE `ID` = '$id') and `Category` != 'unique'";
 		$result = mysqli_query($conn, $query);
 		
 		$count = mysqli_num_rows($result);
